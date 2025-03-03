@@ -1,0 +1,279 @@
+--Wypisz imię i nazwisko (połączone spacją), id_pracownika oraz pensję dla pracowników z nieparzystym id_pracownika bez dodatku. Posortuj malejąco według pensji. Imiona i nazwiska sformatuj z wielką pierwszą literą. 
+select initcap(imie)||' '||initcap(nazwisko) osoba, id_pracownika, pensja
+from pracownicy
+where (mod(id_pracownika, 2)) <> 0 and (dodatek is null)
+order by pensja ASC;
+
+--Wypisz imiona, nazwiska, roczne zarobki (12 pensji) oraz całkowite roczne zarobki (12 pensji + opcjonalny dodatek) dla pracowników zatrudnionych w drugim kwartale. Posortuj według nazwisk, a następnie imion.
+select upper(imie) imie, upper(nazwisko)nazwisko , pensja*12 roczne_zarobki, pensja*12+NVL(dodatek,0) calkowite_roczne_zarobki
+from pracownicy
+where to_char(data_zatrudnienia, 'MM') = '04' or to_char(data_zatrudnienia, 'MM') = '05' or to_char(data_zatrudnienia, 'MM') = '06';
+
+--Wyświetl inicjały osób, których zawody kończą się na "K".
+select initcap(substr(imie, 1, 1)) || '.' || initcap(substr(nazwisko, 1,1)) inicjal
+from pracownicy
+where zawod like '%K';
+
+--Wyświetl aktualną datę i godzinę.
+select to_char(sysdate, 'DD MM YYYY HH24:MI:SS') aktualna_data_i_czas from dual;
+
+--Wypisz imiona i nazwiska wszystkich osób. Dodatkowo w ostatniej kolumnie wyświetl napis „KOBIETA” lub „MĘŻCZYZNA” w zależności od płci danej osoby.
+select upper(imie) imie, upper(nazwisko) nazwisko,
+case
+when plec = 'K' then 'KOBIETA'
+when plec = 'M' then 'MEZCZYZNA'
+end as plec
+from pracownicy;
+
+--Wyświetl imiona, nazwiska i zawody tych osób, których nazwisko ma najmniejszą liczbę znaków.
+select upper(imie) imie, upper(nazwisko) nazwisko, zawod
+from pracownicy
+where length(nazwisko) = (select min(length(nazwisko)) from pracownicy);
+
+--Wypisz wszystkie nazwiska pracowników, każde poprzedzone taką liczbą spacji jak długość danego nazwiska.
+select lpad(nazwisko, length(nazwisko)+length(nazwisko), ' ')
+from pracownicy;
+
+--Wypisz imiona i nazwiska pracowników połączone spacją a za nazwiskiem tyle gwiazdek, jaki jest identyfikator placówki, w której pracownik pracuje.
+select imie||' '||rpad(nazwisko, id_placowki + length(nazwisko), '*') napis 
+from pracownicy;
+
+--W pierwszej kolumnie wypisz daty urodzenia wszystkich pracowników, w drugiej kolumnie datę o trzy dni późniejszą od daty z pierwszej kolumny, w trzeciej kolumnie datę o 5 dni wcześniejszą od daty pierwszej kolumny, w czwartej kolumnie datę o miesiąc późniejszą od daty pierwszej kolumny i w piątej kolumnie datę o trzy miesiące wcześniejszą od daty pierwszej kolumny.
+SELECT TO_CHAR(data_urodzenia, 'DD MON YYYY HH24:MI') "D_UR",
+ TO_CHAR(data_urodzenia+3, 'DD MON YYYY HH24:MI') "D_UR + 3 dni",
+ TO_CHAR(data_urodzenia-5, 'DD MON YYYY HH24:MI') "D_UR – 5 dni",
+ TO_CHAR(ADD_MONTHS(data_urodzenia,1), 'DD MON YYYY HH24:MI') "D_UR + miesiąc",
+TO_CHAR(ADD_MONTHS(data_urodzenia, -3), 'DD MON YYYY HH24:MI') "D_UR – 3 miesiące"
+FROM pracownicy;
+
+--W pierwszej kolumnie wyświetl nazwiska pracowników, a w drugiej kolumnie te same nazwiska, tylko z literami K zamienionymi na znak zapytania i literami A zamienionymi na gwiazdki. 
+select nazwisko, translate(nazwisko, 'KA', '?*') as "nazwisko po zmianie"
+from pracownicy;
+
+--W pierwszej kolumnie wyświetl nazwiska pracowników, a w drugiej kolumnie te same nazwiska, tylko z fragmentem SZKA zmienionym na SZKOWA.
+select nazwisko, replace(nazwisko, 'SZKA', 'SZKOWA') nazwisko_po_zmianie
+from pracownicy;
+
+--Dla każdego z pracowników wyświetl napis postaci: „Krzysztof Konecki, ekonomista, wiek: 45.”. porządkuj wyniki malejąco według wieku.  
+select initcap(imie)||' '||initcap(nazwisko)||', '|| lower(zawod)||', '|| 'wiek: '|| floor(months_between(sysdate, data_urodzenia)/12) dane
+from pracownicy;
+
+--Wypisz identyfikatory pracowników oraz napis „Zbyt niska pensja” jeśli pensja pracownika jest niższa niż 3500 lub wartość pensji, jeśli pensja jest większa lub równa 3500. Uporządkuj wyniki rosnąco według identyfikatorów pracowników.
+select id_pracownika, case
+  when pensja<3500 then 'zbyt niska pensja'
+  when pensja>=3500 then to_char(pensja)
+  end informacja
+from pracownicy
+order by id_pracownika;
+
+--Wypisz imiona i nazwiska tych mężczyzn, dla których id_pracownika jest liczbą parzystą. 
+select imie, nazwisko
+from pracownicy
+where mod(id_pracownika,2) = 0 and plec='M';
+
+--Podaj nazwiska i imiona osób, które urodziły się w maju lub w sierpniu lub w listopadzie.
+select nazwisko, imie
+from pracownicy
+where to_char(data_urodzenia, 'MM') in ('05', '08','11');
+
+--Napisz zapytanie, które pozwoli uzyskać wydruk.
+select id_pracownika "Identyfikator", initcap(imie)||' '||initcap(nazwisko) "Imie i nazwisko", upper(substr(imie, 1,1))||'.'||upper(substr(nazwisko,1,1)) "Inicjaly", to_char(data_urodzenia, 'DD MON YYYY') "Data urodzenia", to_char(data_urodzenia, 'Q') "Kwartal z daty urodzenia"
+from pracownicy;
+
+--Wypisz nazwiska mężczyzn, daty ich urodzenia oraz datę dnia ich 65 urodzin. Uporządkuj wyniki alfabetycznie według nazwisk.
+select nazwisko, data_urodzenia, to_char(add_months(data_urodzenia, 780), 'YYYY MM DD') "65_urodziny"
+from pracownicy
+where plec='M'
+order by nazwisko;
+
+--Dla każdego pracownika wyświetl jego imię, nazwisko oraz napis „Powyżej 3700”, jeśli pensja pracownika jest większa niż 3700 lub napis „Konieczna podwyżka”, jeśli pensja jest mniejsza lub równa 3700.
+select imie, nazwisko, case
+  when pensja>3700 then 'powyzej 3700'
+  when pensja<=3700 then 'konieczna podwyzka'
+  end komunikat
+from pracownicy;
+
+--Dla każdego pracownika wyświetl następujący tekst postaci „Pan(i) Natalia Rogulska, z zawodu projektant, jest zatrudniony(a) w firmie od 2016-09-18.”.
+select 'Pan(i) ' || initcap(imie)||' '||initcap(nazwisko)||','||' z zawodu '|| lower(zawod)|| ','||' jest zatrudniony(a) w firmie od '|| to_char(data_zatrudnienia, 'YYYY-MM-DD')||'.' informacje
+from pracownicy;
+
+--Wypisz wszystkie dni, w których zatrudniono w firmie jakiegoś pracownika (w formacie dzień (dwucyfrowo) skrócona nazwa miesiąca (wielkimi literami) rok (czterocyfrowo)). W osobnej kolumnie wyświetl informację o tym jaki był to dzień tygodnia (wielkimi literami). 
+select distinct to_char(data_zatrudnienia, 'DD MON YYYY') data, to_char(data_zatrudnienia, 'DAY') dzien_tygodnia
+from pracownicy;
+
+--odaj nazwę dnia tygodnia, w którym urodził się pan Konecki.
+select to_char(data_urodzenia, 'DAY') dzien_tygodnia
+from pracownicy
+where nazwisko='KONECKI';
+
+--Podaj nazwiska i imiona osób, które urodziły się 18 lutego.
+select nazwisko, imie
+from pracownicy
+where  to_char(data_urodzenia, 'DD/MM') = '18/02';
+
+--Wypisz identyfikatory pracowników, dla których 35% ich pensji przekracza 2000.
+select id_pracownika
+from pracownicy
+where 0.35*pensja>2000;
+
+--Wypisz imiona i nazwiska tych osób, które mają więcej niż 50 lat i jednocześnie posiadają w swoim nazwisku literę W lub Z. Uporządkuj wyniki alfabetycznie względem nazwisk, a w przypadku takich samych nazwisk alfabetycznie według imion.
+select imie, nazwisko
+from pracownicy
+where months_between(sysdate, data_urodzenia)>12*50 and (nazwisko like '%W%' or nazwisko like '%Z%')
+order by nazwisko, imie;
+
+--Podaj nazwiska i pensje osób o stażu pracy dłuższym niż 11 lat. Uporządkuj wyniki malejąco według pensji.
+select nazwisko, pensja
+from pracownicy
+where months_between(sysdate, data_zatrudnienia)>12*11
+order by pensja desc;
+
+--Wypisz nazwiska i daty urodzenia wszystkich mężczyzn, których urodziny przypadają w 2 lub 4 kwartale roku. Uporządkuj wyniki alfabetycznie według nazwisk, a w przypadku takich samych nazwisk: od najmłodszego do najstarszego.
+select nazwisko, data_urodzenia
+from pracownicy
+where to_char(data_urodzenia, 'Q') in ('2', '4') and plec = 'M'
+order by nazwisko asc, data_urodzenia desc;
+
+--Wypisz identyfikatory, nazwiska i pensje wszystkich pracowników nie dostających dodatku, których nazwisko ma więcej niż 8 znaków. Uporządkuj wyniki malejąco według pensji, a w przypadku takich samych pensji - alfabetycznie według nazwisk.
+select id_pracownika, nazwisko, pensja
+from pracownicy
+where dodatek is null and length(nazwisko)>8
+order by pensja desc, nazwisko asc;
+
+--Wyświetl wszystkie pensje, które nie należą do przedziału (3800, 4100]. Uporządkuj wyniki malejąco. Usuń powtórzenia.
+select distinct pensja
+from pracownicy
+where pensja<=3800 or pensja>4100
+order by 1 desc;
+
+--Wyświetl wszystkie pensje, które należą do przedziału (3800, 4100]. Uporządkuj wyniki rosnąco. Usuń z wyniku duplikaty.
+select distinct pensja
+from pracownicy
+where pensja>3800 and pensja<=4100
+order by 1;
+
+--Wypisz identyfikatory pracowników, którzy mają pensję wysokości 3800, 3850, 4210, 6200 lub 6600.
+select id_pracownika
+from pracownicy
+where pensja=3800 or pensja=3850 or pensja=4210 or pensja=6200 or pensja=6600;
+
+--Wypisz identyfikatory oraz pensje osób o nazwisku Kowalska, Fraszka lub Balcerzyk. Uporządkuj wyniki malejąco względem pensji, a w przypadku takich samych pensji – rosnąco względem identyfikatorów.
+select id_pracownika, pensja
+from pracownicy
+where nazwisko in ('KOWALSKA','FRASZKA','BALCERZYK')
+order by pensja desc, id_pracownika;
+
+--Wypisz nazwiska osób nie zaczynające się od litery K. Uporządkuj wyniki alfabetycznie.
+select nazwisko
+from pracownicy
+where nazwisko not like 'K%'
+order by nazwisko asc;
+
+--Wypisz wszystkie nazwiska, które zawierają literę M lub których trzecią literą jest A. Wyniki uporządkuj alfabetycznie. Spraw, aby pierwsza litera wyświetlanych nazwisk była wielka, a pozostałe – małe.
+select initcap(nazwisko) nazwisko
+from pracownicy
+where nazwisko like '%M%' or nazwisko like '__A%'
+order by 1;
+
+--Wybierz nazwiska i zawody osób, których pensja jest równa 3700 lub 4100 i których imiona kończą się na literę A. Uporządkuj wyniki alfabetycznie według nazwisk.
+select nazwisko, zawod
+from pracownicy
+where (pensja=3700 or pensja=4100) and imie like '%A'
+order by nazwisko;
+
+--Wybierz różne zawody wykonywane w firmie przez mężczyzn. 
+select zawod
+from pracownicy
+where plec='M';
+
+--Wybierz imiona, nazwiska i daty zatrudnienia osób pracujących w zawodzie plastyka lub projektanta. Uporządkuj wyniki alfabetycznie według nazwisk, a w przypadku takich samych nazwisk - alfabetycznie według imion.
+select imie, nazwisko, data_zatrudnienia
+from pracownicy
+where zawod='PLASTYK' or zawod='PROJEKTANT'
+order by nazwisko, imie;
+
+--Wypisz identyfikatory pracowników oraz napis „Zbyt niska pensja” jeśli pensja pracownika jest niższa niż 3500 lub wartość pensji, jeśli pensja jest większa lub równa 3500. Uporządkuj wyniki rosnąco według identyfikatorów pracowników.
+select id_pracownika, case
+                      when pensja<3500 then 'zbyt niska pensja'
+                      when pensja>=3500 then to_char(pensja)
+                      end "informacja"
+from pracownicy;
+
+
+----Wyświetl nazwiska i imiona pracowników wraz z informacją o poziomie, który został im przypisany. 
+select nazwisko, imie, LEVEL
+from pracownicy
+start with id_szefa is null
+connect by id_szefa=PRIOR id_pracownika;
+
+
+--Wyświetl nazwiska i imiona pracowników wraz z informacją o poziomie, który został im przypisany. Uporządkuj wyniki rosnąco według poziomów, a w przypadku takich samych poziomów – alfabetycznie według nazwisk.
+select nazwisko, imie, LEVEL
+from pracownicy
+start with id_szefa is null
+connect by id_szefa=PRIOR id_pracownika
+order by level, nazwisko;
+
+--Wypisz nazwiska, imiona i poziomy przełożonych pracownika ZATORSKI oraz jego dane.
+select nazwisko, imie, level
+from pracownicy
+start with nazwisko='ZATORSKI'
+connect by id_pracownika=PRIOR id_szefa;
+
+--Wypisz imiona, nazwiska, pensje pracowników, nazwy placówek i poziomy wykształcenia. Posortuj według nazw placówek, a następnie nazwisk. 
+select p.imie imie, p.nazwisko nazwisko, p.pensja pensja, pl.nazwa nazwa, w.poziom poziom
+from pracownicy p join placowki pl on p.id_placowki=pl.id_placowki join wyksztalcenie w on p.id_wyksztalcenia = w.id_wyksztalcenia
+order by nazwa, nazwisko;
+
+--Wypisz nazwiska pracowników i ich przełożonych, używając samozłączenia. Posortuj według nazwisk przełożonych, a następnie podwładnych.
+select p.nazwisko as "nazwisko pracownika", s.nazwisko as "nazwisko szefa"
+from pracownicy p join pracownicy s on p.id_szefa=s.id_pracownika;
+
+--Wypisz imiona i nazwiska szefów, używając EXISTS. Posortuj alfabetycznie według nazwisk, a przy tych samych – według imion.
+select imie, nazwisko
+from pracownicy p
+where exists (select 1 from pracownicy where id_szefa=p.id_pracownika)
+order by nazwisko, imie;
+
+--Znajdź nazwiska występujące w placówce o nazwie BIURO, ale nie występujące w placówce o nazwie SKLEP I. Uporządkuj wyniki alfabetycznie. Nadaj kolumnie nazwę „Nazwiska – różnice”
+select nazwisko "Nazwiska - różnice"
+from pracownicy p join placowki pl on p.id_placowki=pl.id_placowki
+where nazwa='BIURO'
+MINUS
+select nazwisko  
+from pracownicy p join placowki pl on p.id_placowki=pl.id_placowki
+where nazwa='SKLEP I'
+order by 1;
+
+--Wyświetl imiona i nazwiska pracowników oraz datę o trzy miesiące późniejszą od daty zatrudnienia dla osób, które mają parzyste id_pracownika i datę o 6 miesięcy późniejszą od daty zatrudnienia dla osób o nieparzystym id_pracownika. Ostatnią kolumnę zatytułuj „DATA SZKOLENIA”. Uporządkuj wyniki alfabetycznie według nazwisk, a w przypadku takich samych nazwisk – alfabetycznie według imion. Spraw, aby daty zostały wypisane w formacie dzień dwucyfrowo ukośnik miesiąc dwucyfrowo ukośnik rok czterocyfrowo.
+select imie, nazwisko, to_char(add_months(data_zatrudnienia, 3), 'DD/MM/YYYY') as "data szkolenia"
+from pracownicy 
+where mod(id_pracownika,2)=0
+union all
+select imie, nazwisko, to_char(add_months(data_zatrudnienia, 6), 'DD/MM/YYYY')
+from pracownicy 
+where mod(id_pracownika,2)=1
+order by 2,1;
+
+--Wyświetl nazwy placówek wraz ze średnimi pensjami, które są w nich wypłacane. Uporządkuj wyniki alfabetycznie według nazw placówek. Następnie zmodyfikuj instrukcję tak, aby dodatkowo został wyświetlony wiersz z całkowitym podsumowaniem (średnią dla wszystkich pracowników).
+select nazwa, avg(pensja) srednia_pensja
+from pracownicy join placowki using(id_placowki)
+group by rollup(nazwa)
+order by nazwa;
+
+--Wykorzystując operator algebraiczny wypisz w porządku alfabetycznym nazwiska wszystkich pracowników, przy czym za nazwiskami pracowników z placówki o identyfikatorze 1 wypisz dodatkowo znak *. Następnie spróbuj osiągnąć ten sam wynik za pomocą konstrukcji CASE
+select nazwisko||'*'
+from pracownicy
+where id_placowki=1
+union all
+select nazwisko
+from pracownicy
+where id_placowki<>1
+order by 1;
+
+select case id_placowki
+      when 1 then nazwisko||'*'
+      else nazwisko
+      end
+from pracownicy
+order by 1;
